@@ -1,33 +1,32 @@
 package facturaciondeagualosguaduales;
 
 public class Facturacion {
-
-    // Consumo en m3 de cada apartamento (0 = sin consumo registrado)
+    String apartamentos[] = new String[6];
     int consumo[] = new int[6];
+    Double[] precios = new Double[6];
 
     public static void main(String[] args) {
         controlAguaApartamento();
     }
 
     // Pide el numero de apartamento hasta que este entre 1 y 6
-    public int pedirApartamento() {
-        int apto;
+    public int agregarApartamentos() {
+        int apartamento;
         do {
             System.out.print("Ingrese el numero de apartamento (1 a 6): ");
-            apto = ValidadorDeTipos.validarEnteros();
-            if (apto < 1 || apto > 6) {
+            apartamento = ValidadorDeTipos.validarEnteros();
+            if (apartamento < 1 || apartamento > 6) {
                 System.out.println("Apartamento invalido, debe estar entre 1 y 6.");
             }
-        } while (apto < 1 || apto > 6);
-        return apto;
+        } while (apartamento < 1 || apartamento > 6);
+        return apartamento;
     }
 
-    // Devuelve el valor por m3 segun el rango de consumo
-    public double obtenerTarifa(int m3) {
+    public double registrarTarifa(int metro3) {
         double tarifa;
-        if (m3 <= 10) {
+        if (metro3 <= 10) {
             tarifa = 3000;
-        } else if (m3 <= 20) {
+        } else if (metro3 <= 20) {
             tarifa = 4500;
         } else {
             tarifa = 6000;
@@ -35,91 +34,111 @@ public class Facturacion {
         return tarifa;
     }
 
-    // Opcion 1
     public void registrarConsumo() {
-        int apto = pedirApartamento();
-        int m3;
+        int apartamento = agregarApartamentos();
+        int metro3;
         do {
-            System.out.print("Ingrese el consumo en m3 del apartamento " + apto + ": ");
-            m3 = ValidadorDeTipos.validarEnteros();
-            if (m3 <= 0) {
+            System.out.print("Registrar consumo de apartamento " + apartamento + ": ");
+            metro3 = ValidadorDeTipos.validarEnteros();
+            if (metro3 <= 0) {
                 System.out.println("El consumo debe ser mayor que 0.");
             }
-        } while (m3 <= 0);
+        } while (metro3 <= 0);
 
-        consumo[apto - 1] = m3; // si ya tenia consumo, lo reemplaza
-        System.out.println("Consumo registrado correctamente.");
+        // -1 es para que se guarde en la posicion real ya que si tengo 6 apartamentos en el index tengo 5 y lo que hace el -1 es llegar a los 5 del index que en realidad son 6 ya que se cuenta desde el cero
+        apartamentos[apartamento - 1] = "Apartamento " + apartamento;
+        consumo[apartamento - 1] = metro3;
+        precios[apartamento - 1] = registrarTarifa(metro3);
+        System.out.println("Consumo ingresado");
     }
 
-    // Opcion 2
     public void consultarFactura() {
-        int apto = pedirApartamento();
-        int m3 = consumo[apto - 1];
+        int apartamento = agregarApartamentos();
 
-        if (m3 == 0) {
-            System.out.println("El apartamento " + apto + " no tiene consumo registrado");
+        if (apartamentos[apartamento - 1] == null || precios[apartamento - 1] == null) {
+            System.out.println("El apartamento " + apartamento + " no tiene consumo registrado");
         } else {
             double cargoFijo = 12000;
-            double tarifa = obtenerTarifa(m3);
-            double valorConsumo = m3 * tarifa;
+            double tarifa = precios[apartamento - 1];
+            double valorConsumo = consumo[apartamento - 1] * tarifa;
             double subtotal = cargoFijo + valorConsumo;
             double recargo = 0;
 
-            if (m3 > 25) {
+            if (consumo[apartamento - 1] > 25) {
                 recargo = subtotal * 0.10;
             }
             double total = subtotal + recargo;
 
-            System.out.println("\n======== Factura apartamento " + apto + " ========");
-            System.out.println("Consumo: " + m3 + " m3");
-            System.out.println("Tarifa aplicada: $ " + tarifa + " por m3");
+            System.out.println("\n========Factura========");
+            System.out.println(apartamentos[apartamento - 1]);
+            System.out.println("Consumo: " + consumo[apartamento - 1] + " m3");
+            System.out.println("Tarifa: $ " + tarifa + " por m3");
             System.out.println("Valor del consumo: $ " + valorConsumo);
-            System.out.println("Cargo fijo: $ " + cargoFijo);
-            if (m3 > 25) {
-                System.out.println("Recargo (10%): $ " + recargo);
+            System.out.println("Cargo Fijo: $ " + cargoFijo);
+
+            if (consumo[apartamento - 1] > 25) {
+                System.out.println("Recargo del 10% : $ " + recargo);
                 System.out.println("ALERTA: consumo excesivo");
             }
             System.out.println("Total a pagar: $ " + total);
         }
     }
 
-    // Opcion 3
     public void reporteGeneral() {
-        int total = 0;
-        int registrados = 0;
-        int sinRegistro = 0;
-        int excesivos = 0;
-        int mayor = 0;
-        int aptoMayor = 0;
-        int i = 0;
+        int consumoTotal = 0;
+        int aptosConRegistro = 0;
+        int aptosSinRegistro = 0;
+        int aptosExcesivos = 0;
+        int consumoMayor = 0;
+        int numAptoMayor = 0;
+        double totalARecaudar = 0;
+        String lineasDetalle = "";
+        int pos = 0;
 
-        while (i < consumo.length) {
-            if (consumo[i] > 0) {
-                registrados++;
-                total += consumo[i];
-                if (consumo[i] > mayor) {
-                    mayor = consumo[i];
-                    aptoMayor = i + 1;
+        while (pos < consumo.length) {
+            if (apartamentos[pos] != null && precios[pos] != null) {
+                aptosConRegistro++;
+                consumoTotal += consumo[pos];
+
+                double valorApartamento = 12000 + consumo[pos] * precios[pos];
+                String nivel = "Normal";
+
+                if (consumo[pos] > 25) {
+                    valorApartamento = valorApartamento * 1.10;
+                    nivel = "Excesivo";
+                    aptosExcesivos++;
                 }
-                if (consumo[i] > 25) {
-                    excesivos++;
+                totalARecaudar += valorApartamento;
+
+                if (consumo[pos] > consumoMayor) {
+                    consumoMayor = consumo[pos];
+                    numAptoMayor = pos + 1;
                 }
+
+                lineasDetalle += "Apto " + (pos + 1) + " | " + consumo[pos] + " m3 | "
+                        + nivel + " | $ " + valorApartamento + "\n";
             } else {
-                sinRegistro++;
+                aptosSinRegistro++;
+                lineasDetalle += "Apto " + (pos + 1) + " | Sin registro\n";
             }
-            i++;
+            pos++;
         }
 
-        if (registrados == 0) {
+        if (aptosConRegistro == 0) {
             System.out.println("Aun no hay consumos registrados");
         } else {
-            double promedio = (double) total / registrados;
-            System.out.println("\n======== Reporte general ========");
-            System.out.println("Consumo total del conjunto: " + total + " m3");
-            System.out.println("Consumo promedio: " + promedio + " m3");
-            System.out.println("Mayor consumo: apartamento " + aptoMayor + " con " + mayor + " m3");
-            System.out.println("Apartamentos sin registro: " + sinRegistro);
-            System.out.println("Apartamentos con consumo excesivo: " + excesivos);
+            double consumoPromedio = (double) consumoTotal / aptosConRegistro;
+
+            System.out.println("\n========Reporte general========");
+            System.out.println("---- Detalle por apartamento ----");
+            System.out.print(lineasDetalle);
+            System.out.println("---------- Resumen ----------");
+            System.out.println("Consumo total: " + consumoTotal + " m3");
+            System.out.println("Consumo promedio: " + consumoPromedio + " m3");
+            System.out.println("Mayor consumo: apartamento " + numAptoMayor + " con " + consumoMayor + " m3");
+            System.out.println("Sin registro: " + aptosSinRegistro);
+            System.out.println("Con consumo excesivo: " + aptosExcesivos);
+            System.out.println("Total a recaudar: $ " + totalARecaudar);
         }
     }
 
@@ -128,7 +147,7 @@ public class Facturacion {
         int option;
 
         do {
-            System.out.println("\n===== LOS GUADUALES - CONTROL DE AGUA =====");
+            System.out.println("\n =======LOS GUADUALES - CONTROL DE AGUA=======");
             System.out.println("1. Registrar consumo de un apartamento");
             System.out.println("2. Consultar factura de un apartamento");
             System.out.println("3. Ver reporte general del conjunto");
@@ -150,7 +169,7 @@ public class Facturacion {
                     break;
 
                 case 4:
-                    System.out.println("Hasta pronto!!");
+                    System.out.println("Adios!");
                     break;
 
                 default:
